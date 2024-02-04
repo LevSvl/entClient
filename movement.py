@@ -159,16 +159,18 @@ def start_game():
 
                 # рисуем окружности
                 game_screen.fill(black)
+
                 for landed_circle in landed_circles:
                     pygame.draw.circle(game_screen, landed_circle[2], (landed_circle[0], landed_circle[1]), circle_radius)
 
-                # кружок текущего игрока    
-                pygame.draw.circle(game_screen, circle_color, circle_pos, circle_radius)
-                # добавить кружки на окно
-                pygame.display.update()
+                for start_pos,circle_pos,circle_color,circle_landed,user_figure in user_iter():
+                    # кружок текущего игрока    
+                    pygame.draw.circle(game_screen, circle_color, circle_pos, circle_radius)
+                    # добавить кружки на окно
+                    pygame.display.update()
 
-                # частота обновления экрана
-                pygame.time.Clock().tick(60)
+                    # частота обновления экрана
+                    pygame.time.Clock().tick(60)
 
             elif state == pause:
                 pass
