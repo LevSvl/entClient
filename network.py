@@ -47,16 +47,16 @@ class TCPClient:
     
     def send_int(self,x:int):
         _s = self.socket
-        _s.sendall(struct.pack('I',x))
+        _s.sendall(struct.pack('i',x))
         # _s.send(str(x).encode())
         return 0
 
     def get_int(self):
         _s = self.socket
         x = _s.recv(4)
-        x = struct.unpack('I', x)[0]
+        x = struct.unpack('i', x)[0]
         return x
-
+    
     @staticmethod
     def transform_data(data:str):
         data = transform(data)

@@ -126,9 +126,10 @@ def start_game():
                     # После вычисления позиции кружка полученная информация 
                     # Отправляется на сервер, сразу поле этого к серверу
                     # Выполняется запрос о позиции кружка второго игрока
-                    net.send_pos_info(circle_pos[0])
-                    # x = net.get_pos_info()
-
+                    # net.send_pos_info(circle_pos[0])
+                    x = net.get_pos_info()
+                    circle_pos2 = [x,circle_pos2[1]]
+                    print(x)
                     # проверяем, столкнулась ли окружность с другой приземлившейся окружностью
                     for landed_circle in landed_circles:
                         landed_rect = pygame.Rect(landed_circle[0]-circle_radius,

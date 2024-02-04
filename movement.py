@@ -8,6 +8,25 @@ config = configparser.ConfigParser()
 
 from network import TCPClient
 
+USER_CONTEXT = {
+    'start_pos': None,
+    'circle_pos': None,
+    'circle_color': None,
+    'circle_landed': None,
+    'user_figure': None
+}
+
+NETWORK = [USER_CONTEXT,USER_CONTEXT.copy()]
+
+def user_iter():
+    for u in NETWORK:
+        start_pos = u.get('start_pos')
+        circle_pos = u.get('circle_pos')
+        circle_color = u.get('circle_color')
+        circle_landed = u.get('circle_landed')
+        user_figure = u.get('user_figure')
+        
+        yield start_pos,circle_pos,circle_color,circle_landed,user_figure
 
 def start_game():
     net = TCPClient()
@@ -34,16 +53,34 @@ def start_game():
         circle_speed = 3
 
         start_pos1 = [screen_width//3, -circle_radius]
-        start_pos2 = [screen_width - (screen_width//3), -circle_radius]
-        # circle_color = random.choice([red, green, blue, yellow, white])
         circle_color = red
         circle_pos = start_pos1.copy()
         circle_landed = False
 
 
+
+        NETWORK[0]['start_pos'] = start_pos1
+        NETWORK[0]['circle_color'] = circle_color
+        NETWORK[0]['circle_pos'] = circle_pos
+        NETWORK[0]['circle_landed'] = circle_landed
+        NETWORK[0]['user_figure'] = False        
+
+        start_pos2 = [screen_width - (screen_width//3), -circle_radius]
         circle_color2 = green 
         circle_pos2 = start_pos2.copy()
         circle_landed2 = False
+
+        NETWORK[1]['start_pos'] = start_pos2
+        NETWORK[1]['circle_color'] = circle_color2
+        NETWORK[1]['circle_pos'] = circle_pos2
+        NETWORK[1]['circle_landed'] = circle_landed2
+        NETWORK[1]['user_figure'] = False
+
+        # Сервер распределяет какой кружок достанется пользователю
+        user_figure = net.get_int()
+        NETWORK[user_figure]['user_figure'] = True
+        # circle_color = random.choice([red, green, blue, yellow, white])
+
         # Соединение с сервером
         # net.validate_start_params(circle_color)
 
@@ -64,113 +101,61 @@ def start_game():
                         else:
                             state=pause
             if state==running:
-                # если окружность не приземлилась
-                if not circle_landed:
-                    # меняем направление по нажатию клавиши
-                    keys = pygame.key.get_pressed()
-                    if keys[input_dict.controls_get(config,config_path)['move_left']]:
-                        circle_pos[0] -= circle_speed
-                    if keys[input_dict.controls_get(config,config_path)['move_right']]:
-                        circle_pos[0] += circle_speed
-
-                    # После вычисления позиции кружка полученная информация 
-                    # Отправляется на сервер, сразу поле этого к серверу
-                    # Выполняется запрос о позиции кружка второго игрока
-                    net.send_pos_info(circle_pos[0])
-                    # x = net.get_pos_info()
-
-                    # проверяем, столкнулась ли окружность с другой приземлившейся окружностью
-                    for landed_circle in landed_circles:
-                        landed_rect = pygame.Rect(landed_circle[0]-circle_radius,
-                                                   landed_circle[1]-circle_radius,
-                                                     circle_radius*2, circle_radius*2)
-                        
-                        falling_rect = pygame.Rect(circle_pos[0]-circle_radius,
-                                                    circle_pos[1]-circle_radius,
-                                                    circle_radius*2, circle_radius*2)
-                                                
-                        if landed_rect.colliderect(falling_rect):
-                            circle_landed = True
-                            collision_x = circle_pos[0]
-                            collision_y = landed_circle[1] - circle_radius*2
-                            landed_circles.append((collision_x, collision_y, circle_color))
-                            break
-                                                    
-                    # если окружность не столкнулась с другой приземлившейся окружностью
-                    if not circle_landed:
-                        # окружность движется вниз
-                        circle_pos[1] += circle_speed
-                        # проверяем, достигла ли окружность дна
-                        if circle_pos[1] + circle_radius > screen_height:
-                            circle_pos[1] = screen_height - circle_radius
-                            circle_landed = True
-                            # добавляем окружность и ее позицию в список приземлившихся окружностей
-                            landed_circles.append((circle_pos[0], circle_pos[1], circle_color))
-                     
-                if circle_landed:
-                    # если окружность приземлилась, задаем параметры новой
-                    circle_pos = start_pos1.copy()
-                    # circle_color = random.choice([red, green, blue, yellow, white])
-                    circle_landed = False
-
-
-
-                if not circle_landed2:
-                    # меняем направление по нажатию клавиши
-                    keys = pygame.key.get_pressed()
-                    if keys[input_dict.controls_get(config,config_path)['move_left']]:
-                        circle_pos[0] -= circle_speed
-                    if keys[input_dict.controls_get(config,config_path)['move_right']]:
-                        circle_pos[0] += circle_speed
-
-                    # После вычисления позиции кружка полученная информация 
-                    # Отправляется на сервер, сразу поле этого к серверу
-                    # Выполняется запрос о позиции кружка второго игрока
-                    # net.send_pos_info(circle_pos[0])
-                    x = net.get_pos_info()
-                    circle_pos2 = [x,circle_pos2[1]]
-                    print(x)
-                    # проверяем, столкнулась ли окружность с другой приземлившейся окружностью
-                    for landed_circle in landed_circles:
-                        landed_rect = pygame.Rect(landed_circle[0]-circle_radius,
-                                                   landed_circle[1]-circle_radius,
-                                                     circle_radius*2, circle_radius*2)
-                        
-                                              
-                        falling_rect2 = pygame.Rect(circle_pos2[0]-circle_radius,
-                                                    circle_pos2[1]-circle_radius,
-                                                    circle_radius*2, circle_radius*2) 
-                        
-                        if landed_rect.colliderect(falling_rect2):
-                            circle_landed2 = True
-                            collision_x2 = circle_pos2[0]
-                            collision_y2 = landed_circle[1] - circle_radius*2
-                            landed_circles.append((collision_x2, collision_y2, circle_color2))
-                            break
-                                                    
-
-                    # если окружность не столкнулась с другой приземлившейся окружностью
-                    if not circle_landed2:
-                        # окружность движется вниз
-                        circle_pos2[1] += circle_speed
-
-                        # проверяем, достигла ли окружность дна
-                        if circle_pos2[1] + circle_radius > screen_height:
-                            circle_pos2[1] = screen_height - circle_radius
-                            circle_landed2 = True
-                            # добавляем окружность и ее позицию в список приземлившихся окружностей
-                            landed_circles.append((circle_pos2[0], circle_pos2[1], circle_color2))                        
-
-                if circle_landed2:
-                    # если окружность приземлилась, задаем параметры новой
-                    circle_pos2 = start_pos2.copy()
-                    # circle_color = random.choice([red, green, blue, yellow, white])
-                    circle_landed2 = False
-
                 
+                for start_pos,circle_pos,circle_color,circle_landed,user_figure in user_iter():
+                    
+                    # если окружность не приземлилась
+                    if not circle_landed:
+                        # меняем направление по нажатию клавиши
+                        keys = pygame.key.get_pressed()
+                        if keys[input_dict.controls_get(config,config_path)['move_left']]:
+                            circle_pos[0] -= circle_speed
+                        if keys[input_dict.controls_get(config,config_path)['move_right']]:
+                            circle_pos[0] += circle_speed
 
-
-
+                        # После вычисления позиции кружка полученная информация 
+                        # Отправляется на сервер, сразу поле этого к серверу
+                        # Выполняется запрос о позиции кружка второго игрока
+                        if user_figure:
+                            net.send_pos_info(circle_pos[0])
+                            net.send_pos_info(circle_pos[1])
+                        else:
+                            x = net.get_pos_info()
+                            y = net.get_pos_info()
+                            circle_pos = [x,y]
+                        # проверяем, столкнулась ли окружность с другой приземлившейся окружностью
+                        for landed_circle in landed_circles:
+                            landed_rect = pygame.Rect(landed_circle[0]-circle_radius,
+                                                    landed_circle[1]-circle_radius,
+                                                        circle_radius*2, circle_radius*2)
+                            
+                            falling_rect = pygame.Rect(circle_pos[0]-circle_radius,
+                                                        circle_pos[1]-circle_radius,
+                                                        circle_radius*2, circle_radius*2)
+                                                    
+                            if landed_rect.colliderect(falling_rect):
+                                circle_landed = True
+                                collision_x = circle_pos[0]
+                                collision_y = landed_circle[1] - circle_radius*2
+                                landed_circles.append((collision_x, collision_y, circle_color))
+                                break
+                                                        
+                        # если окружность не столкнулась с другой приземлившейся окружностью
+                        if not circle_landed:
+                            # окружность движется вниз
+                            circle_pos[1] += circle_speed
+                            # проверяем, достигла ли окружность дна
+                            if circle_pos[1] + circle_radius > screen_height:
+                                circle_pos[1] = screen_height - circle_radius
+                                circle_landed = True
+                                # добавляем окружность и ее позицию в список приземлившихся окружностей
+                                landed_circles.append((circle_pos[0], circle_pos[1], circle_color))
+                        
+                    if circle_landed:
+                        # если окружность приземлилась, задаем параметры новой
+                        circle_pos = start_pos.copy()
+                        # circle_color = random.choice([red, green, blue, yellow, white])
+                        circle_landed = False
 
                 # рисуем окружности
                 game_screen.fill(black)
@@ -179,8 +164,6 @@ def start_game():
 
                 # кружок текущего игрока    
                 pygame.draw.circle(game_screen, circle_color, circle_pos, circle_radius)
-                # кружок второго игрока
-                pygame.draw.circle(game_screen, circle_color2, circle_pos2, circle_radius)
                 # добавить кружки на окно
                 pygame.display.update()
 
