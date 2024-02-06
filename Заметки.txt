@@ -1,0 +1,96 @@
+Начало работы: 30.01.2024
+
+Заметки по игре:
+    1.Добавить внутриигровое меню:
+        во внутриигровом меню не работает подсветка кнопок
+        если не получится настроить подсветку - удалить её вовсе
+    2.Проверять, свернуто ли приложение (если свернуто - ставить на паузу)
+    3.Переработать физику столкновения
+    4.Добавить звук в меню игры и в игру
+    5.Сделать логический геймплей:
+        рандомный спавн окружностей
+        управление корзинкой(сделать вместо прямоугольника корзинку)
+        ловить окружности
+    6. Что будет выводиться в меню Настройки? в игре
+    7.Перенести некоторые переменные из gaim_main_menu.py  в config и раскидать функции по файлам
+    8. Как перенести кодификацию цветов и шрифты в config?
+    9.Изменить курсор
+    10. Куда деть характеристики окружности и прямоугольника?
+    11. Попробовать заменить фигуры на спрайты
+
+Заметки по лаунчеру:
+    1.Сделать возможность изменения управления и настроек экрана:
+        управление с NumPad клавиатуры и стрелочками
+        обработка ошибок
+        уведомление, что необходим перезапуск игры для применения разрешения экрана
+        с помощью библиотеки screeninfo сделать рекомендуемо разрешение (test.py)
+
+    2. Как перезапустить лаунчер?
+
+    3. Необязательно перезапускать лаунчер, можно перечитать config
+Сохраненный на всякий пожарный код:
+    self.setWindowFlags(Qt.FramelessWindowHint)  - окно без рамки
+    game_screen = pygame.display.set_mode((screen_width, screen_height),pygame.NOFRAME):
+        pygame.NOFRAME - убрать шапку у окна
+    код для паузы и эскейпа:
+    1. железобетонно работает, но теряется возможность изменять клавиши для паузы и внутриигрового меню
+            for event in pygame.event.get():
+                if event.type ==pygame.KEYDOWN:
+                    if event.key == pygame.K_p:    
+                        if state == pause:
+                            state= running
+                        else:
+                            state=pause
+                    if event.key == pygame.K_ESCAPE:                      
+                        if state == pause:
+                            pass
+                        else:
+                            state=pause
+
+    2. за семь залуп за гороховый суп
+            for event in pygame.event.get():
+                if event.type ==pygame.key.get_pressed():
+                    if event.key == pygame.key.get_pressed()[input_dict.controls_get(config,config_path)['pause']]:    
+                        if state == pause:
+                            state= running
+                        else:
+                            state=pause
+                    if event.key == pygame.K_ESCAPE:                      
+                        if state == pause:
+                            pass
+                        else:
+                            state=pause
+
+    класс Settings железобетонно работающий (input_dict.input_map не существует, считывать из config)
+
+    class Settings(QtWidgets.QMainWindow, settings.Ui_MainWindow):
+        def __init__(self):
+            super().__init__()
+            self.setupUi(self)
+            self.ingame_menu_close_button.clicked.connect(self.leave_to_main)
+            #создать лейбл и кнопку для каждого ключа
+            i=0
+            for key in input_dict.input_map.keys():
+                i+=10
+                self.key_label = QLabel(f'{key}', self) 
+                self.key_label.setObjectName(f'label_{key}')
+                self.key_label.setGeometry(QtCore.QRect(30, 30+i*2, 60, 60))
+                self.value_label = QLabel(f'{input_dict.input_map[key]}', self)
+                self.value_label.setGeometry(QtCore.QRect(150, 30+i*2, 60, 60))
+                self.value_label.setObjectName(f'label_{key}')
+                self.key_input = QLineEdit(f'{input_dict.input_map[key]}', self)
+                self.key_input.setGeometry(QtCore.QRect(200, 50+i*2, 80, 20))
+                self.key_input.textChanged.connect(self.control_change)
+                self.key_input.setObjectName(f'input_{key}')
+                #self.key_button.clicked.connect(self.control_change)
+
+        def control_change(self):
+            self.key_button = QtWidgets.QPushButton('Подтвердить изменения',self)
+            self.key_button.setGeometry(QtCore.QRect(self.key_input.x(), self.key_input.y()+20, 160, 30))
+            self.key_button.clicked.connect(self.change_value)
+            self.key_button.show()
+
+        def change_value(self):
+            for key in input_dict.input_map:
+                input_dict.input_map[key]=self.findChild(QLineEdit, f"input_{key}").text()
+            print(input_dict.input_map)
