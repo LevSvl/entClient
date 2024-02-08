@@ -43,7 +43,7 @@ class Settings(QtWidgets.QMainWindow, settings.Ui_MainWindow):
             repaired_key=f'{key}'.replace('_',' ').capitalize()
             self.key_label = QLabel(f'{repaired_key}', self) 
             self.key_label.setObjectName(f'{key}')
-            self.key_label.setGeometry(QtCore.QRect(30, 30+i*2, 60, 60))
+            self.key_label.setGeometry(QtCore.QRect(30, 30+i*2, 65, 60))
             self.key_value_label = QLabel(f'{control_map[key]}', self)
             self.key_value_label.setGeometry(QtCore.QRect(150, 30+i*2, 60, 60))
             self.key_value_label.setObjectName(f'{key}_value')
@@ -73,7 +73,7 @@ class Settings(QtWidgets.QMainWindow, settings.Ui_MainWindow):
 
     def change_value(self):
         for key in dict(config.items("Controls")):
-            if key ==self.findChild(QLabel, f"{key}").text():
+            if f"{key}" ==self.findChild(QLabel, f"{key}").objectName():
                 new_value=self.findChild(QLineEdit, f"input_{key}").text()
                 config.set("Controls",f"{key}",f"{new_value}")
                 with open('config.ini', "w") as config_file:
@@ -111,6 +111,8 @@ def createConfig(config,config_path):
     config.add_section("Screen")
     config.set("Controls", "move_left", "a")
     config.set("Controls", "move_right", "d") 
+    config.set("Controls", "move_up", "w")
+    config.set("Controls", "move_down", "s") 
     config.set("Screen", "screen_width", "1920")
     config.set("Screen", "screen_height", "1080") 
     with open(config_path, "w") as config_file:
