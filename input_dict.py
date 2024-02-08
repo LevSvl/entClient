@@ -25,3 +25,8 @@ def get_buttons(config,config_path):
     config.read(config_path)
     input_map = dict(config.items("Buttons"))
     return(input_map)
+
+def get_fps(config,config_path):
+    config.read(config_path)
+    input_map = dict(config.items("FPS"))
+    return input_map

@@ -13,31 +13,41 @@
   <property name="windowTitle">
    <string>Menu</string>
   </property>
-  <widget class="QLabel" name="controls_label">
+  <widget class="QPushButton" name="settings_close_button">
    <property name="geometry">
     <rect>
-     <x>30</x>
-     <y>30</y>
-     <width>81</width>
-     <height>21</height>
+     <x>0</x>
+     <y>260</y>
+     <width>180</width>
+     <height>40</height>
     </rect>
    </property>
    <property name="text">
-    <string>Управление:</string>
+    <string>Вернуться в главное меню</string>
    </property>
   </widget>
-  <widget class="QPushButton" name="ingame_menu_close_button">
+  <widget class="QScrollArea" name="scrollArea">
    <property name="geometry">
     <rect>
-     <x>40</x>
-     <y>180</y>
-     <width>160</width>
-     <height>60</height>
+     <x>0</x>
+     <y>0</y>
+     <width>400</width>
+     <height>260</height>
     </rect>
    </property>
-   <property name="text">
-    <string>Вернуться в игру</string>
+   <property name="widgetResizable">
+    <bool>true</bool>
    </property>
+   <widget class="QWidget" name="scrollAreaWidgetContents">
+    <property name="geometry">
+     <rect>
+      <x>0</x>
+      <y>0</y>
+      <width>398</width>
+      <height>258</height>
+     </rect>
+    </property>
+   </widget>
   </widget>
  </widget>
  <resources/>
