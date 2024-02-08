@@ -2,6 +2,8 @@ import pygame
 from pygame import font 
 import configparser
 import random 
+import win32
+from win32 import win32gui
 import input_dict
 font.init()
 config_path = "config.ini"
@@ -33,6 +35,13 @@ bigfont = pygame.font.SysFont('Corbel',40)
 smallfont = pygame.font.SysFont('Corbel',35)  
 ingame_bigfont = pygame.font.SysFont('Corbel',30)
 ingame_smallfont = pygame.font.SysFont('Corbel',25)
+
+def points_counting(screen,scores):
+    if scores==None:
+        scores= 0 
+    text_surface = ingame_bigfont.render(f"Счёт: {scores}", True, (0, 0, 0))
+    screen.blit(text_surface, (screen_width-(screen_width-200),screen_height-(screen_height-600)))
+
 
 def open_ingame_menu(info):
     game_screen = info[0]
@@ -96,14 +105,21 @@ def open_ingame_settings(info):
         game_screen.blit(b, (back_to_game_button[0]+10,back_to_game_button[1]+20*i))
     pygame.display.flip() # Обновляем экран для появления вышенаписанного
 
+def show_pause(info):
+    game_screen = info[0]
+    text = 'PAUSE'
+    a = ingame_bigfont.render(text, 1, (255, 255, 255),(0, 0, 255)) # первый аргумент- текст, второй - сглаживание, третий - код цвета текста, четвертый- код цвета фона
+    game_screen.blit(a, (screen_width-200,screen_height-(screen_height-600)))
+    pygame.display.flip()
+
 def open_settings():
     print("Settings")
-    
+   
 def open_game():
     game_screen = pygame.display.set_mode((screen_width, screen_height),pygame.NOFRAME)
     pygame.display.set_caption("Драматическое столкновение")
     # характеристики окружности и прямоугольника
-    circle_pos = [random.randint(screen_width/2-(screen_width/2-50),screen_width/2+(screen_width/2-50)),50]
+    circle_pos = [random.randint(screen_width/2-(screen_width/2-50),screen_width/2+(screen_width/2-50)),400]
     circle_radius = 20
     rect_pos = [screen_width/2, screen_height/2]
     rect_width = 100
@@ -113,6 +129,8 @@ def open_game():
     green = (0, 255, 0)
     red = (255, 0, 0)
     speed = 5
+    #счет
+    scores = 0
     #переменные внутригровых меню
     buttons_text=[ingame_smallfont.render('Back to game' , True , color),ingame_smallfont.render('Settings' , True , color),ingame_smallfont.render('To main menu' , True , color),ingame_smallfont.render('Back' , True , color)]
     #координаты кнопок [первые два значения - левый верхний угол, остальные- правый нижний угол ]
@@ -126,7 +144,18 @@ def open_game():
     ingame_menu=inactive   #переменная внутриигрового меню
     ingame_menu_settings = inactive #переменная раздела настроек внутриигрового меню
     running=True    #переменная главного цикла
+    circle_landed = False #переменная спавна новой окружности
     while running:
+        #проверка, свёрнуто ли окно
+        wnd = win32gui.FindWindow(None,"Драматическое столкновение")
+        if (wnd == win32gui.GetForegroundWindow()):
+            #не свёрнуто, ничего не происходит
+            pass
+        else:
+            #свёрнуто, игра ставится на паузу
+            state=pause
+            info=[game_screen]
+            show_pause(info)
         mouse = pygame.mouse.get_pos() #(x,y) координаты мыши
         for event in pygame.event.get():
             #нажатие клавиши
@@ -138,10 +167,8 @@ def open_game():
                             state=active
                     else:
                         state=pause
-                        text = 'PAUSE'
-                        a = ingame_bigfont.render(text, 1, (255, 255, 255),(0, 0, 255)) # первый аргумент- текст, второй - сглаживание, третий - код цвета текста, четвертый- код цвета фона
-                        game_screen.blit(a, (screen_width-200,screen_height-(screen_height-600)))
-                        pygame.display.flip()
+                        info=[game_screen]
+                        show_pause(info)
                 #нажатие 'Escape'
                 if event.key == pygame.K_ESCAPE:
                     pygame.mouse.set_visible(True)
@@ -213,48 +240,60 @@ def open_game():
                         open_ingame_menu(info)
                         
         if state==active:
-            pygame.mouse.set_visible(False)
-            keys = pygame.key.get_pressed()
-            if keys[map['move_left']]:
-                rect_pos[0] -= speed
-            if keys[map['move_right']]:
-                rect_pos[0] += speed
-            if keys[map['move_up']]:
-                rect_pos[1] -= speed
-            if keys[map['move_down']]:
-                rect_pos[1] += speed
-            
-            # окружность движется вниз
-            circle_pos[1] += speed
+            if not circle_landed:
+                pygame.mouse.set_visible(False)
+                keys = pygame.key.get_pressed()
+                if keys[map['move_left']]:
+                    rect_pos[0] -= speed
+                if keys[map['move_right']]:
+                    rect_pos[0] += speed
+                if keys[map['move_up']]:
+                    rect_pos[1] -= speed
+                if keys[map['move_down']]:
+                    rect_pos[1] += speed
+                
+                # окружность движется вниз
+                circle_pos[1] += speed
+                #проверка касания дна окружностью
+                if circle_pos[1] + circle_radius >= screen_height-420:
+                    circle_pos[1] = screen_height - circle_radius
+                    circle_landed = True
+                    scores-=1
+                # проверяем , используя формулу расстояния,  столкнулась ли окружность с прямоугольником
+                circle_x = circle_pos[0]
+                circle_y = circle_pos[1]
+                rect_x = rect_pos[0]
+                rect_y = rect_pos[1]
+                distance_x = abs(circle_x - rect_x)
+                distance_y = abs(circle_y - rect_y)
+                if distance_x <= (rect_width/2 + circle_radius) and distance_y <= (rect_height/2 + circle_radius):
+                    #speed = 0
+                    circle_color = red # изменяем цвет фигур в момент столкновения
+                    rect_color = green
+                    scores+=1
+                    circle_landed = True
+                else:
+                    circle_color = green
+                    rect_color = black
+                if circle_landed:
+                    # если окружность приземлилась, задаем параметры новой
+                    circle_pos = [random.randint(screen_width/2-(screen_width/2-50),screen_width/2+(screen_width/2-50)),400]
+                    circle_landed = False
 
-            # проверяем (используя формулу расстояния),
-            # столкнулась ли окружность с прямоугольником
-            circle_x = circle_pos[0]
-            circle_y = circle_pos[1]
-            rect_x = rect_pos[0]
-            rect_y = rect_pos[1]
-            distance_x = abs(circle_x - rect_x)
-            distance_y = abs(circle_y - rect_y)
-            if distance_x <= (rect_width/2 + circle_radius) and distance_y <= (rect_height/2 + circle_radius):
-                speed = 0
-                circle_color = red # изменяем цвет фигур
-                rect_color = green # в момент столкновения
-            else:
-                circle_color = green
-                rect_color = black
+                # рисуем окружность и прямоугольник на экране
+                game_screen.fill((white))
+                pygame.draw.circle(game_screen, circle_color, circle_pos, circle_radius)
+                pygame.draw.rect(game_screen, rect_color, (rect_pos[0]-rect_width/2, rect_pos[1]-rect_height/2, rect_width, rect_height))
+                points_counting(game_screen,scores)
+                pygame.display.update()
 
-            # рисуем окружность и прямоугольник на экране
-            game_screen.fill((white))
-            pygame.draw.circle(game_screen, circle_color, circle_pos, circle_radius)
-            pygame.draw.rect(game_screen, rect_color, (rect_pos[0]-rect_width/2, rect_pos[1]-rect_height/2, rect_width, rect_height))
-
-            pygame.display.update()
-
-            # задаем частоту обновления экрана
-            pygame.time.Clock().tick(fps)
+                # задаем частоту обновления экрана
+                pygame.time.Clock().tick(fps)
 
 def main_menu_start():
-    pygame.init()  
+    pygame.init()
+    hand = pygame.SYSTEM_CURSOR_HAND 
+    pygame.mouse.set_cursor(hand)
     #переменные для создания экрана
     buttons_text=[smallfont.render('Start' , True , color),smallfont.render('Settings' , True , color),smallfont.render('Quit' , True , color)]
     screen = pygame.display.set_mode((screen_width, screen_height),pygame.NOFRAME)  
