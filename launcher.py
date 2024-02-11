@@ -37,8 +37,14 @@ class Settings(QtWidgets.QMainWindow, settings.Ui_MainWindow):
         control_map = dict(config.items("Controls"))
         screen_map = dict(config.items("Screen"))
         fps_map = dict(config.items("FPS"))
+        #координата x заголовков разделов
+        topic_x = 10
+        #координата x действия
+        labels_x = 30
+        #координата x поля ввода
+        input_x = 150
         self.controls_label = QLabel('Управление:',self)
-        self.controls_label.setGeometry(QtCore.QRect(10, 10, 160, 30))
+        self.controls_label.setGeometry(QtCore.QRect(topic_x, 10, 160, 30))
         i=0
         #выведение информации об управлении 
         for key in control_map:
@@ -46,30 +52,30 @@ class Settings(QtWidgets.QMainWindow, settings.Ui_MainWindow):
             repaired_key=f'{key}'.replace('_',' ').capitalize()
             self.key_label = QLabel(f'{repaired_key}', self) 
             self.key_label.setObjectName(f'{key}')
-            self.key_label.setGeometry(QtCore.QRect(self.controls_label.x()+20, self.controls_label.y()+i*2, 65, 60))
+            self.key_label.setGeometry(QtCore.QRect(labels_x, self.controls_label.y()+i*2, 65, 60))
             self.key_input = QLineEdit(f'{control_map[key]}', self)
-            self.key_input.setGeometry(QtCore.QRect(150, self.controls_label.y()+20+i*2, 80, 20))
+            self.key_input.setGeometry(QtCore.QRect(input_x, self.controls_label.y()+20+i*2, 80, 20))
             self.key_input.textChanged.connect(self.settings_change)
             self.key_input.setObjectName(f'input_{key}')
         self.settings_label = QLabel("Настройки экрана:",self)
-        self.settings_label.setGeometry(QtCore.QRect(self.controls_label.x(), self.key_input.y()+15, 120, 60))
+        self.settings_label.setGeometry(QtCore.QRect(topic_x, self.key_input.y()+15, 120, 60))
         #создание dropdown меню для выбора разрешения экрана
         self.resolution_label = QLabel('Screen resolution',self)
-        self.resolution_label.setGeometry(QtCore.QRect(self.key_label.x(), self.settings_label.y()+40, 160, 30))
+        self.resolution_label.setGeometry(QtCore.QRect(labels_x, self.settings_label.y()+40, 160, 30))
         self.combo =QComboBox(self)
         self.combo.addItem(f"{screen_map['screen_width']} x {screen_map['screen_height']}")
         if f"{screen_map['screen_width']}"=="1920":
             self.combo.addItem("640 x 480")
         else:
             self.combo.addItem("1920 x 1080")
-        self.combo.setGeometry(self.key_input.x(), self.resolution_label.y(), 150, 30)
+        self.combo.setGeometry(input_x, self.resolution_label.y(), 150, 30)
         self.combo.currentTextChanged.connect(self.settings_change)
         for key in fps_map:
             repaired_key =f'{key}'.upper()
             self.fps_label = QLabel(f'{repaired_key}',self)
-            self.fps_label.setGeometry(QtCore.QRect(self.resolution_label.x(), self.resolution_label.y()+35, 160, 30))
+            self.fps_label.setGeometry(QtCore.QRect(labels_x, self.resolution_label.y()+35, 160, 30))
             self.fps_input = QLineEdit(f"{fps_map[f'{key}']}", self)
-            self.fps_input.setGeometry(QtCore.QRect(self.key_input.x(), self.combo.y()+40, 80, 20))
+            self.fps_input.setGeometry(QtCore.QRect(input_x, self.combo.y()+40, 80, 20))
             self.fps_input.textChanged.connect(self.settings_change)
 
     def settings_change(self):
