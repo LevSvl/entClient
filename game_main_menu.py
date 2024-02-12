@@ -44,12 +44,19 @@ ingame_smallfont = pygame.font.SysFont('Corbel',25)
 sound1 = pygame.mixer.Sound('main_menu.wav')
 sound2 = pygame.mixer.Sound('background.wav')
 
-def points_counting(screen,score):
-    if score==None:
-        score= 0 
-    text_surface = ingame_bigfont.render(f"Счёт: {score}", True, (0, 0, 0))
+def life_counting(screen,health):
+    text_surface = ingame_bigfont.render(f"Здоровье: {health}", True, (0, 0, 0))
     screen.blit(text_surface, (screen_width-(screen_width-200),screen_height-(screen_height-600)))
-    
+
+def show_tasks(game_screen,treasure):
+    font.init()
+    title_text = 'Задачи:'
+    tasks_text = f'Собрать сокровища - {treasure}/10'
+    a = ingame_bigfont.render(title_text,  True, (0, 0, 0)) # первый аргумент- текст, второй - сглаживание, третий - код цвета текста, четвертый- код цвета фона
+    b = ingame_bigfont.render(tasks_text,True, (0, 0, 0) )
+    game_screen.blit(a, (screen_width-(screen_width-200),screen_height-(screen_height-700)))
+    game_screen.blit(b, (screen_width-(screen_width-200),screen_height-(screen_height-750)))
+
 def open_ingame_menu(info):
     active = 0
     running = True
@@ -108,7 +115,7 @@ def open_ingame_menu(info):
         game_screen.blit(buttons_text[0] , (back_to_game_button[0]+20,back_to_game_button[1]+5))
         game_screen.blit(buttons_text[1] , (settings_button[0]+40,settings_button[1]+5))
         game_screen.blit(buttons_text[2] , (to_main_menu_button[0]+10,to_main_menu_button[1]+5))
-        pygame.display.flip() # Обновляем экран для появления вышенаписанного
+        pygame.display.update() # Обновляем экран для появления вышенаписанного
     return active
 
 def open_ingame_settings(info):
@@ -212,6 +219,8 @@ def open_game():
     chest = pygame.transform.scale(chest,(25,25))
     ship = pygame.image.load('ship.png')
     ship = pygame.transform.scale(ship,(150,100))
+    rock = pygame.image.load('rocks.png')
+    rock = pygame.transform.scale(rock,(25,25))
     ocean = pygame.image.load('ocean.png')
     ocean = pygame.transform.scale(ocean,(screen_width,screen_height))
     circle_radius = 10
@@ -224,9 +233,10 @@ def open_game():
     ship_pos = [screen_width // 2, screen_height - rect_height*10]
     positions = []
     npc_speed = 2
-    player_speed = 2
+    player_speed = 5
+    treasure = 0
     #счет
-    score = 0
+    health = 3
     #переменные внутригровых меню
     buttons_text=[ingame_smallfont.render('Back to game' , True , color),ingame_smallfont.render('Settings' , True , color),ingame_smallfont.render('To main menu' , True , color),ingame_smallfont.render('Back' , True , color)]
     #координаты кнопок [первые два значения - левый верхний угол, остальные- правый нижний угол ]
@@ -245,12 +255,13 @@ def open_game():
         wnd = win32gui.FindWindow(None,"Драматическое столкновение")
         if (wnd == win32gui.GetForegroundWindow()):
             #не свёрнуто, ничего не происходит
-            pass
+            pygame.mixer.unpause()
         else:
             #свёрнуто, игра ставится на паузу
             state=pause
             info=[game_screen]
             show_pause(info)
+            pygame.mixer.pause()
         #обработка кнопок вызова паузы и внутриигрового меню
         for event in pygame.event.get():
             #нажатие клавиши
@@ -323,11 +334,11 @@ def open_game():
                 distance_y = abs(pos[1] - ship_pos[1])
                 if pos[2]:
                     if distance_x < (rect_width/2 + circle_radius) and distance_y < (rect_height/2 + circle_radius):
-                        score += 1
+                        treasure +=1
                         positions.remove(pos)
                 else:
                     if distance_x < (rect_width/2 + circle_radius) and distance_y < (rect_height/2 + circle_radius):
-                        score  -= 1
+                        health  -= 1
                         positions.remove(pos)
             # убираем падающие объекты за пределами окна
             positions = [pos for pos in positions if pos[1] < screen_height]
@@ -340,11 +351,12 @@ def open_game():
                     game_screen.blit(chest,(pos[0],pos[1]))
                 else:
                     #pygame.draw.circle(game_screen, (255, 0, 0), pos[:2], circle_radius)
-                    game_screen.blit(bomb, (pos[0],pos[1]))
+                    game_screen.blit(rock, (pos[0],pos[1]))
             #отрисовка игрока
             game_screen.blit(ship, (ship_pos[0],ship_pos[1]))
             #учет и вывод очков
-            points_counting(game_screen,score)
+            life_counting(game_screen,health)
+            show_tasks(game_screen,treasure)
             #вызываем всё вышеуказанное
             pygame.display.update()
             pygame.time.Clock().tick(fps)  
